@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thrulenses — Cinematography &amp; Photography for 5-Star Spaces</title>
+  <meta name="description" content="Thrulenses is the one-artist studio of a luxury cinematographer & photographer — films and stills for 5-star spaces, shot, directed and graded by one pair of hands." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400..800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind (Play CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    window.tailwind = window.tailwind || {}; // stay silent if the CDN is unreachable
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            obsidian: '#0A0A0A',
+            ink: '#141414',
+            platinum: '#C5C5C5',
+            smoke: '#8A8A8A',
+          },
+          fontFamily: {
+            syne: ['Syne', 'sans-serif'],
+            inter: ['Inter', 'sans-serif'],
+          },
+          transitionTimingFunction: {
+            luxe: 'cubic-bezier(0.19, 1, 0.22, 1)',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- GSAP + ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest" defer></script>
+
+  <style>
+    /* ---------- Base ---------- */
+    html { background: #0A0A0A; }
+    body {
+      background: #0A0A0A;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    ::selection { background: #C5C5C5; color: #0A0A0A; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #0A0A0A; }
+    ::-webkit-scrollbar-thumb { background: #3a3a3a; }
+
+    /* ---------- Cinematic grain ---------- */
+    .grain {
+      position: fixed; inset: -50%;
+      width: 200%; height: 200%;
+      pointer-events: none;
+      z-index: 90;
+      opacity: 0.05;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ---------- Custom cursor ---------- */
+    #cursor {
+      position: fixed; top: 0; left: 0;
+      width: 12px; height: 12px;
+      border-radius: 999px;
+      background: #fff;
+      mix-blend-mode: difference;
+      pointer-events: none;
+      z-index: 400;
+      display: none;
+      align-items: center; justify-content: center;
+      will-change: transform;
+    }
+    #cursor .cursor-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.28em;
+      color: #0A0A0A;
+      opacity: 0;
+      white-space: nowrap;
+      transform: translateX(0.14em); /* optical centering for tracked text */
+    }
+    #cursor.is-badge { mix-blend-mode: normal; background: rgba(255,255,255,0.92); backdrop-filter: blur(4px); }
+    #cursor.is-badge .cursor-label { opacity: 1; }
+    @media (pointer: fine) { #cursor { display: flex; } }
+
+    /* ---------- Kinetic type helpers ---------- */
+    .mask-line { display: block; overflow: hidden; }
+    .mask-line > .mask-inner { display: block; will-change: transform; }
+    .char { display: inline-block; will-change: transform; }
+    .split-word { display: inline-block; white-space: nowrap; }
+
+    .stroke-text {
+      color: transparent;
+      -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.85);
+    }
+    @media (max-width: 767px) { .stroke-text { -webkit-text-stroke-width: 1px; } }
+
+    /* ---------- Header ---------- */
+    #site-header {
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: rgba(10, 10, 10, 0.35);
+      border-bottom: 1px solid rgba(197, 197, 197, 0.12);
+      transition: background 0.6s ease;
+    }
+    body.scrolled #site-header { background: rgba(10, 10, 10, 0.75); }
+
+    /* ---------- Work cards ---------- */
+    .work-card figure { transform: translateZ(0); }
+    .card-img {
+      transition: transform 1.4s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.8s ease;
+    }
+    .work-card:hover .card-img { transform: scale(1.07); }
+    .card-shade { transition: opacity 0.9s ease; }
+    .work-card:hover .card-shade { opacity: 0.35; }
+    .card-meta { transition: transform 0.9s cubic-bezier(0.19, 1, 0.22, 1); }
+    .work-card:hover .card-meta { transform: translateY(-8px); }
+    .card-tag { transition: transform 0.9s cubic-bezier(0.19, 1, 0.22, 1), background 0.5s ease; }
+    .work-card:hover .card-tag { transform: translateY(-8px); background: rgba(255,255,255,0.12); }
+
+    /* Designed fallback that sits behind each thumbnail (shows if an image fails) */
+    .card-fallback {
+      background:
+        radial-gradient(120% 90% at 20% 0%, rgba(197,197,197,0.14) 0%, transparent 55%),
+        linear-gradient(160deg, #1a1a1a 0%, #0e0e0e 60%, #0A0A0A 100%);
+    }
+
+    /* ---------- Filter tabs ---------- */
+    #work-tabs { position: relative; }
+    #tab-indicator {
+      position: absolute;
+      bottom: -1px; left: 0;
+      height: 1px; width: 0;
+      background: #fff;
+      will-change: transform, width;
+    }
+    .work-tab { transition: color 0.5s ease; }
+    .work-tab.active { color: #fff; }
+
+    /* ---------- Passion ---------- */
+    .ph-word { opacity: 0.14; will-change: opacity; }
+
+    /* ---------- Arsenal ---------- */
+    .gear-card { transition: background 0.7s ease, border-color 0.7s ease; }
+    .gear-card:not(.gear-highlight):hover { background: rgba(255,255,255,0.03); }
+
+    /* ---------- Footer giant type ---------- */
+    .footer-cta .grad-text {
+      background: linear-gradient(100deg, #ffffff 0%, #ffffff 42%, #C5C5C5 58%, #5d5d5d 78%, #ffffff 100%);
+      background-size: 240% 100%;
+      background-position: 0% 0%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      transition: background-position 1.4s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+    .footer-cta:hover .grad-text { background-position: 100% 0%; }
+
+    /* ---------- Marquee & drift strip ---------- */
+    .marquee-content { flex-shrink: 0; min-width: 100%; will-change: transform; }
+    #drift-strip { white-space: nowrap; will-change: transform; }
+
+    /* ---------- Modal ---------- */
+    #asset-modal { display: none; }
+    #asset-modal.open { display: flex; }
+    #modal-video::-webkit-media-controls-panel { background-image: linear-gradient(transparent, rgba(0,0,0,0.7)); }
+
+    /* ---------- Preloader ---------- */
+    #preloader { will-change: transform; }
+
+    /* ---------- Reduced motion ---------- */
+    @media (prefers-reduced-motion: reduce) {
+      #cursor { display: none !important; }
+    }
+  </style>
+  <noscript><style>#preloader { display: none; } .grain { display: none; }</style></noscript>
+</head>
+
+<body class="bg-obsidian font-inter text-white antialiased selection:bg-platinum selection:text-obsidian">
+
+  <!-- ======================= CUSTOM CURSOR ======================= -->
+  <div id="cursor" aria-hidden="true"><span class="cursor-label"></span></div>
+
+  <!-- ======================= FILM GRAIN ======================= -->
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- ======================= PRELOADER ======================= -->
+  <div id="preloader" class="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-obsidian">
+    <div class="mask-line">
+      <div id="preloader-word" class="mask-inner font-syne text-sm font-extrabold tracking-[0.5em] text-platinum md:text-base">THRULENSES</div>
+    </div>
+    <div class="mt-7 h-px w-44 overflow-hidden bg-white/10">
+      <div id="preloader-bar" class="h-full w-full origin-left scale-x-0 bg-platinum"></div>
+    </div>
+    <div id="preloader-count" class="absolute bottom-8 right-8 font-syne text-5xl font-bold text-white/15 md:bottom-10 md:right-12 md:text-6xl">00</div>
+    <div class="absolute bottom-10 left-8 hidden text-[10px] tracking-[0.4em] text-white/25 md:left-12 md:block">ONE ARTIST — EVERY FRAME</div>
+  </div>
+
+  <!-- ======================= HEADER ======================= -->
+  <header id="site-header" class="fixed inset-x-0 top-0 z-[120]">
+    <nav class="mx-auto flex max-w-[1600px] items-center justify-between px-6 py-4 md:px-10 md:py-5">
+      <a href="#top" class="magnetic flex items-center gap-3" aria-label="Thrulenses — home">
+        <i data-lucide="aperture" class="h-[18px] w-[18px] text-platinum"></i>
+        <span class="font-syne text-sm font-extrabold uppercase tracking-[0.35em]">Thrulenses</span>
+      </a>
+
+      <div class="hidden items-center gap-10 text-[11px] uppercase tracking-[0.3em] text-smoke lg:flex">
+        <a href="#work" class="magnetic transition-colors duration-500 hover:text-white">Work</a>
+        <a href="#passion" class="magnetic transition-colors duration-500 hover:text-white">The Passion</a>
+        <a href="#arsenal" class="magnetic transition-colors duration-500 hover:text-white">Arsenal</a>
+        <a href="#about" class="magnetic transition-colors duration-500 hover:text-white">About</a>
+      </div>
+
+      <a href="mailto:Thrulenses670@gmail.com?subject=Project%20Inquiry%20—%20Thrulenses"
+         class="magnetic group inline-flex items-center gap-3 whitespace-nowrap rounded-full border border-platinum/25 px-5 py-2.5 text-[10px] uppercase tracking-[0.3em] text-platinum transition-colors duration-700 hover:border-white hover:bg-white hover:text-obsidian md:px-6">
+        <span>Let's Talk</span>
+        <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-500 group-hover:rotate-45"></i>
+      </a>
+    </nav>
+  </header>
+
+  <main id="top">
+
+    <!-- ======================= HERO ======================= -->
+    <section id="hero" class="relative flex h-[100svh] min-h-[640px] flex-col justify-end overflow-hidden">
+      <!-- ============================================================
+           ▓  YOUR FOOTAGE — HERO BACKGROUND FILM
+           ------------------------------------------------------------
+           • Swap the <source src> below for your own ambient clip,
+             e.g.  src="assets/hero.mp4".
+           • Must stay muted + looping so browsers allow autoplay.
+           • Also swap the poster <img src> for a matching still frame.
+           • Keep the clip short (~10–15s) and ~6–8 Mbps for smooth scroll.
+           ============================================================ -->
+      <div id="hero-media" class="absolute inset-0 will-change-transform">
+        <div class="absolute inset-0 card-fallback"></div>
+        <img id="hero-fallback"
+             src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=2400&auto=format&fit=crop"
+             alt="" aria-hidden="true"
+             class="absolute inset-0 h-full w-full object-cover opacity-60" />
+        <video id="hero-video" class="absolute inset-0 h-full w-full object-cover opacity-0" autoplay muted loop playsinline preload="auto">
+          <source src="https://videos.pexels.com/video-files/3571264/3571264-uhd_3840_2160_30fps.mp4" type="video/mp4" />
+        </video>
+        <!-- Cinematic wash -->
+        <div class="absolute inset-0 bg-gradient-to-b from-obsidian/80 via-obsidian/20 to-obsidian"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-obsidian/60 via-transparent to-obsidian/40"></div>
+      </div>
+
+      <div id="hero-content" class="relative z-10 mx-auto w-full max-w-[1600px] px-6 pb-28 md:px-10 md:pb-24">
+        <p id="hero-eyebrow" class="mb-6 flex items-center gap-4 text-[10px] uppercase tracking-[0.45em] text-platinum/80 md:mb-8 md:text-[11px]">
+          <span class="inline-block h-px w-10 bg-platinum/60"></span>
+          Independent Visual Artist — Luxury Spaces
+        </p>
+
+        <h1 id="hero-headline" class="font-syne font-extrabold uppercase leading-[0.98] tracking-tight text-[clamp(2.3rem,6.6vw,6.6rem)]">
+          <span class="mask-line"><span class="mask-inner hl-line">Cinematography</span></span>
+          <span class="mask-line"><span class="mask-inner hl-line">&amp; <span class="stroke-text">Photography</span></span></span>
+          <span class="mask-line"><span class="mask-inner hl-line">for <span class="text-platinum">5-Star Spaces.</span></span></span>
+        </h1>
+
+        <div id="hero-foot" class="mt-10 flex flex-col gap-8 border-t border-platinum/15 pt-6 md:mt-14 md:flex-row md:items-center md:justify-between">
+          <p class="max-w-md text-[13px] leading-relaxed text-smoke">
+            Shot, directed and graded by one pair of hands. Nothing between
+            the vision and the frame — just an obsession with light.
+          </p>
+          <div class="flex items-center gap-10 text-[10px] uppercase tracking-[0.35em] text-white/50">
+            <span>EST. MMXXI</span>
+            <span>4°36′N — 74°04′W</span>
+            <span class="hidden md:inline">S-LOG3 / 4K</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scroll indicator -->
+      <div id="scroll-indicator" class="absolute bottom-0 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-3 pb-6">
+        <span class="text-[9px] uppercase tracking-[0.5em] text-white/40">Scroll</span>
+        <span class="block h-14 w-px overflow-hidden bg-white/15">
+          <span id="scroll-line" class="block h-full w-px bg-platinum"></span>
+        </span>
+      </div>
+    </section>
+
+    <!-- ======================= MARQUEE ======================= -->
+    <section class="border-y border-platinum/15 py-5" aria-hidden="true">
+      <div class="flex overflow-hidden">
+        <div class="marquee-content flex items-center gap-10 whitespace-nowrap pr-10 font-syne text-xs font-bold uppercase tracking-[0.4em] text-white/35">
+          <span>Light</span><span class="text-platinum/60">✦</span>
+          <span>Geometry</span><span class="text-platinum/60">✦</span>
+          <span>Atmosphere</span><span class="text-platinum/60">✦</span>
+          <span>Raw Emotion</span><span class="text-platinum/60">✦</span>
+          <span>Silent Narratives</span><span class="text-platinum/60">✦</span>
+          <span>Visual Storytelling</span><span class="text-platinum/60">✦</span>
+        </div>
+        <div class="marquee-content flex items-center gap-10 whitespace-nowrap pr-10 font-syne text-xs font-bold uppercase tracking-[0.4em] text-white/35">
+          <span>Light</span><span class="text-platinum/60">✦</span>
+          <span>Geometry</span><span class="text-platinum/60">✦</span>
+          <span>Atmosphere</span><span class="text-platinum/60">✦</span>
+          <span>Raw Emotion</span><span class="text-platinum/60">✦</span>
+          <span>Silent Narratives</span><span class="text-platinum/60">✦</span>
+          <span>Visual Storytelling</span><span class="text-platinum/60">✦</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= THE WORK ======================= -->
+    <section id="work" class="relative mx-auto max-w-[1600px] px-6 pt-24 md:px-10 md:pt-36">
+      <div class="mb-10 flex items-end justify-between md:mb-14">
+        <h2 class="font-syne font-extrabold uppercase leading-[0.95] tracking-tight text-[clamp(2.2rem,6vw,5.5rem)]">
+          <span class="mask-line"><span class="mask-inner reveal-line">The</span></span>
+          <span class="mask-line"><span class="mask-inner reveal-line text-platinum">Work</span></span>
+        </h2>
+        <div class="pb-2 text-right text-[10px] uppercase tracking-[0.35em] text-smoke" data-reveal>
+          <p>Films &amp; Stills</p>
+          <p class="mt-2 hidden md:block">Every frame — mine</p>
+        </div>
+      </div>
+
+      <!-- Filter tabs -->
+      <div id="work-tabs" class="mb-14 flex items-center gap-8 border-b border-platinum/15 pb-4 md:mb-20 md:gap-12" data-reveal>
+        <button class="work-tab magnetic active text-[10px] uppercase tracking-[0.3em] text-smoke md:text-[11px]" data-filter="all">
+          All <span class="tab-count text-white/30"></span>
+        </button>
+        <button class="work-tab magnetic text-[10px] uppercase tracking-[0.3em] text-smoke md:text-[11px]" data-filter="video">
+          Cinematography <span class="tab-count text-white/30"></span>
+        </button>
+        <button class="work-tab magnetic text-[10px] uppercase tracking-[0.3em] text-smoke md:text-[11px]" data-filter="photo">
+          Photography <span class="tab-count text-white/30"></span>
+        </button>
+        <span id="tab-indicator" aria-hidden="true"></span>
+      </div>
+
+      <!-- ============================================================
+           ▓  YOUR FOOTAGE & PHOTOS — THE WORK GRID
+           ------------------------------------------------------------
+           Every <article class="work-card"> below is ONE piece. For each:
+             • data-type="video" or "photo"  → decides the tab it lives
+               under, the PLAY/VIEW cursor, and how the modal displays it
+             • data-video="..."   (video cards only) → the film that plays
+               in the pop-up player  (e.g. assets/film-01.mp4)
+             • data-full="..."    (photo cards only) → the full-resolution
+               image the modal shows (e.g. assets/photo-01.jpg)
+             • <img class="card-img" src="...">  → the grid thumbnail
+             • data-title / data-meta → caption text
+           Drop your .mp4 / .jpg files in an /assets folder next to this
+           page and reference them with relative paths. Add or remove
+           <article> blocks freely — the tab counts update automatically.
+           ============================================================ -->
+      <div id="work-grid" class="grid grid-cols-1 gap-14 lg:grid-cols-12 lg:gap-x-10 lg:gap-y-6">
+
+        <!-- 01 · FILM -->
+        <article class="work-card group relative cursor-pointer lg:col-span-7" data-speed="0.3" data-cursor="PLAY"
+                 data-type="video"
+                 data-video="https://videos.pexels.com/video-files/2169880/2169880-uhd_2560_1440_30fps.mp4"
+                 data-title="Amber Hour" data-meta="Resort Film — Siem Reap · MMXXVI"
+                 role="button" tabindex="0" aria-label="Play film: Amber Hour">
+          <figure class="relative aspect-[16/10] overflow-hidden bg-ink">
+            <div class="card-fallback absolute inset-0 flex items-end p-6">
+              <span class="font-syne text-7xl font-extrabold text-white/10">01</span>
+            </div>
+            <img class="card-img absolute inset-0 h-full w-full object-cover" loading="eager"
+                 src="https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1800&auto=format&fit=crop"
+                 alt="Infinity pool of an ultra-luxury resort at dusk" />
+            <div class="card-shade absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20 opacity-80"></div>
+            <div class="absolute left-5 top-5 text-[9px] uppercase tracking-[0.4em] text-white/60">01 / Film</div>
+            <figcaption class="absolute inset-x-0 bottom-0 flex items-end justify-between p-6 md:p-7">
+              <div class="card-meta">
+                <h3 class="font-syne text-xl font-bold md:text-2xl">Amber Hour</h3>
+                <p class="mt-1.5 text-[10px] uppercase tracking-[0.3em] text-white/55">Siem Reap — MMXXVI</p>
+              </div>
+              <span class="card-tag rounded-full border border-platinum/25 bg-white/5 px-3.5 py-1.5 text-[9px] uppercase tracking-[0.3em] text-platinum backdrop-blur-sm">02:48</span>
+            </figcaption>
+          </figure>
+        </article>
+
+        <!-- 02 · STILL -->
+        <article class="work-card group relative cursor-pointer lg:col-span-5 lg:mt-40" data-speed="0.9" data-cursor="VIEW"
+                 data-type="photo"
+                 data-full="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2400&auto=format&fit=crop"
+                 data-title="Stillness, Framed" data-meta="Interior Series — Milan · MMXXVI"
+                 role="button" tabindex="0" aria-label="View photograph: Stillness, Framed">
+          <figure class="relative aspect-[3/4] overflow-hidden bg-ink">
+            <div class="card-fallback absolute inset-0 flex items-end p-6">
+              <span class="font-syne text-7xl font-extrabold text-white/10">02</span>
+            </div>
+            <img class="card-img absolute inset-0 h-full w-full object-cover" loading="lazy"
+                 src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1400&auto=format&fit=crop"
+                 alt="Warm minimalist luxury interior" />
+            <div class="card-shade absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20 opacity-80"></div>
+            <div class="absolute left-5 top-5 text-[9px] uppercase tracking-[0.4em] text-white/60">02 / Still</div>
+            <figcaption class="absolute inset-x-0 bottom-0 flex items-end justify-between p-6 md:p-7">
+              <div class="card-meta">
+                <h3 class="font-syne text-xl font-bold md:text-2xl">Stillness, Framed</h3>
+                <p class="mt-1.5 text-[10px] uppercase tracking-[0.3em] text-white/55">Milan — MMXXVI</p>
+              </div>
+              <span class="card-tag rounded-full border border-platinum/25 bg-white/5 px-3.5 py-1.5 text-[9px] uppercase tracking-[0.3em] text-platinum backdrop-blur-sm">Series</span>
+            </figcaption>
+          </figure>
+        </article>
+
+        <!-- 03 · STILL -->
+        <article class="work-card group relative cursor-pointer lg:col-span-5 lg:mt-10" data-speed="0.7" data-cursor="VIEW"
+                 data-type="photo"
+                 data-full="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?q=80&w=2400&auto=format&fit=crop"
+                 data-title="Overwater" data-meta="Aerial Series — Maldives · MMXXV"
+                 role="button" tabindex="0" aria-label="View photograph: Overwater">
+          <figure class="relative aspect-[4/5] overflow-hidden bg-ink">
+            <div class="card-fallback absolute inset-0 flex items-end p-6">
+              <span class="font-syne text-7xl font-extrabold text-white/10">03</span>
+            </div>
+            <img class="card-img absolute inset-0 h-full w-full object-cover" loading="lazy"
+                 src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?q=80&w=1400&auto=format&fit=crop"
+                 alt="Overwater villas from above, Maldives" />
+            <div class="card-shade absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20 opacity-80"></div>
+            <div class="absolute left-5 top-5 text-[9px] uppercase tracking-[0.4em] text-white/60">03 / Still</div>
+            <figcaption class="absolute inset-x-0 bottom-0 flex items-end justify-between p-6 md:p-7">
+              <div class="card-meta">
+                <h3 class="font-syne text-xl font-bold md:text-2xl">Overwater</h3>
+                <p class="mt-1.5 text-[10px] uppercase tracking-[0.3em] text-white/55">Maldives — MMXXV</p>
+              </div>
+              <span class="card-tag rounded-full border border-platinum/25 bg-white/5 px-3.5 py-1.5 text-[9px] uppercase tracking-[0.3em] text-platinum backdrop-blur-sm">Series</span>
+            </figcaption>
+          </figure>
+        </article>
+
+        <!-- 04 · FILM -->
+        <article class="work-card group relative cursor-pointer lg:col-span-7 lg:mt-44" data-speed="0.25" data-cursor="PLAY"
+                 data-type="video"
+                 data-video="https://videos.pexels.com/video-files/1409899/1409899-uhd_2560_1440_25fps.mp4"
+                 data-title="The Glass Pavilion" data-meta="Architectural Film — Ibiza · MMXXV"
+                 role="button" tabindex="0" aria-label="Play film: The Glass Pavilion">
+          <figure class="relative aspect-[16/9] overflow-hidden bg-ink">
+            <div class="card-fallback absolute inset-0 flex items-end p-6">
+              <span class="font-syne text-7xl font-extrabold text-white/10">04</span>
+            </div>
+            <img class="card-img absolute inset-0 h-full w-full object-cover" loading="lazy"
+                 src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1800&auto=format&fit=crop"
+                 alt="Modern glass villa in evening light" />
+            <div class="card-shade absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20 opacity-80"></div>
+            <div class="absolute left-5 top-5 text-[9px] uppercase tracking-[0.4em] text-white/60">04 / Film</div>
+            <figcaption class="absolute inset-x-0 bottom-0 flex items-end justify-between p-6 md:p-7">
+              <div class="card-meta">
+                <h3 class="font-syne text-xl font-bold md:text-2xl">The Glass Pavilion</h3>
+                <p class="mt-1.5 text-[10px] uppercase tracking-[0.3em] text-white/55">Ibiza — MMXXV</p>
+              </div>
+              <span class="card-tag rounded-full border border-platinum/25 bg-white/5 px-3.5 py-1.5 text-[9px] uppercase tracking-[0.3em] text-platinum backdrop-blur-sm">01:56</span>
+            </figcaption>
+          </figure>
+        </article>
+
+        <!-- 05 · FILM -->
+        <article class="work-card group relative cursor-pointer lg:col-span-6 lg:mt-6" data-speed="0.8" data-cursor="PLAY"
+                 data-type="video"
+                 data-video="https://videos.pexels.com/video-files/3571264/3571264-uhd_3840_2160_30fps.mp4"
+                 data-title="Obsidian Villa" data-meta="Private Estate Film — Dubai · MMXXV"
+                 role="button" tabindex="0" aria-label="Play film: Obsidian Villa">
+          <figure class="relative aspect-[4/3] overflow-hidden bg-ink">
+            <div class="card-fallback absolute inset-0 flex items-end p-6">
+              <span class="font-syne text-7xl font-extrabold text-white/10">05</span>
+            </div>
+            <img class="card-img absolute inset-0 h-full w-full object-cover" loading="lazy"
+                 src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=1600&auto=format&fit=crop"
+                 alt="Luxury villa illuminated at night" />
+            <div class="card-shade absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20 opacity-80"></div>
+            <div class="absolute left-5 top-5 text-[9px] uppercase tracking-[0.4em] text-white/60">05 / Film</div>
+            <figcaption class="absolute inset-x-0 bottom-0 flex items-end justify-between p-6 md:p-7">
+              <div class="card-meta">
+                <h3 class="font-syne text-xl font-bold md:text-2xl">Obsidian Villa</h3>
+                <p class="mt-1.5 text-[10px] uppercase tracking-[0.3em] text-white/55">Dubai — MMXXV</p>
+              </div>
+              <span class="card-tag rounded-full border border-platinum/25 bg-white/5 px-3.5 py-1.5 text-[9px] uppercase tracking-[0.3em] text-platinum backdrop-blur-sm">03:12</span>
+            </figcaption>
+          </figure>
+        </article>
+
+        <!-- 06 · STILL -->
+        <article class="work-card group relative cursor-pointer lg:col-span-6 lg:mt-52" data-speed="0.45" data-cursor="VIEW"
+                 data-type="photo"
+                 data-full="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=2400&auto=format&fit=crop"
+                 data-title="Marble &amp; Light" data-meta="Detail Series — Santorini · MMXXV"
+                 role="button" tabindex="0" aria-label="View photograph: Marble and Light">
+          <figure class="relative aspect-[3/4] overflow-hidden bg-ink">
+            <div class="card-fallback absolute inset-0 flex items-end p-6">
+              <span class="font-syne text-7xl font-extrabold text-white/10">06</span>
+            </div>
+            <img class="card-img absolute inset-0 h-full w-full object-cover" loading="lazy"
+                 src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=1400&auto=format&fit=crop"
+                 alt="Resort pool detail in golden light" />
+            <div class="card-shade absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20 opacity-80"></div>
+            <div class="absolute left-5 top-5 text-[9px] uppercase tracking-[0.4em] text-white/60">06 / Still</div>
+            <figcaption class="absolute inset-x-0 bottom-0 flex items-end justify-between p-6 md:p-7">
+              <div class="card-meta">
+                <h3 class="font-syne text-xl font-bold md:text-2xl">Marble &amp; Light</h3>
+                <p class="mt-1.5 text-[10px] uppercase tracking-[0.3em] text-white/55">Santorini — MMXXV</p>
+              </div>
+              <span class="card-tag rounded-full border border-platinum/25 bg-white/5 px-3.5 py-1.5 text-[9px] uppercase tracking-[0.3em] text-platinum backdrop-blur-sm">Series</span>
+            </figcaption>
+          </figure>
+        </article>
+
+        <!-- 07 · STILL -->
+        <article class="work-card group relative cursor-pointer lg:col-span-5 lg:mt-8" data-speed="0.85" data-cursor="VIEW"
+                 data-type="photo"
+                 data-full="https://images.unsplash.com/photo-1582719508461-905c673771fd?q=80&w=2400&auto=format&fit=crop"
+                 data-title="Suite Nocturne" data-meta="Hotel Series — Paris · MMXXIV"
+                 role="button" tabindex="0" aria-label="View photograph: Suite Nocturne">
+          <figure class="relative aspect-square overflow-hidden bg-ink">
+            <div class="card-fallback absolute inset-0 flex items-end p-6">
+              <span class="font-syne text-7xl font-extrabold text-white/10">07</span>
+            </div>
+            <img class="card-img absolute inset-0 h-full w-full object-cover" loading="lazy"
+                 src="https://images.unsplash.com/photo-1582719508461-905c673771fd?q=80&w=1400&auto=format&fit=crop"
+                 alt="Luxury hotel suite at dusk" />
+            <div class="card-shade absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20 opacity-80"></div>
+            <div class="absolute left-5 top-5 text-[9px] uppercase tracking-[0.4em] text-white/60">07 / Still</div>
+            <figcaption class="absolute inset-x-0 bottom-0 flex items-end justify-between p-6 md:p-7">
+              <div class="card-meta">
+                <h3 class="font-syne text-xl font-bold md:text-2xl">Suite Nocturne</h3>
+                <p class="mt-1.5 text-[10px] uppercase tracking-[0.3em] text-white/55">Paris — MMXXIV</p>
+              </div>
+              <span class="card-tag rounded-full border border-platinum/25 bg-white/5 px-3.5 py-1.5 text-[9px] uppercase tracking-[0.3em] text-platinum backdrop-blur-sm">Series</span>
+            </figcaption>
+          </figure>
+        </article>
+
+        <!-- 08 · FILM -->
+        <article class="work-card group relative cursor-pointer lg:col-span-7 lg:mt-36" data-speed="0.35" data-cursor="PLAY"
+                 data-type="video"
+                 data-video="https://videos.pexels.com/video-files/2169880/2169880-uhd_2560_1440_30fps.mp4"
+                 data-title="Cove of Stillness" data-meta="Wellness Retreat Film — Bali · MMXXIV"
+                 role="button" tabindex="0" aria-label="Play film: Cove of Stillness">
+          <figure class="relative aspect-[16/10] overflow-hidden bg-ink">
+            <div class="card-fallback absolute inset-0 flex items-end p-6">
+              <span class="font-syne text-7xl font-extrabold text-white/10">08</span>
+            </div>
+            <img class="card-img absolute inset-0 h-full w-full object-cover" loading="lazy"
+                 src="https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=1800&auto=format&fit=crop"
+                 alt="Palm-lined beach resort at sunset" />
+            <div class="card-shade absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20 opacity-80"></div>
+            <div class="absolute left-5 top-5 text-[9px] uppercase tracking-[0.4em] text-white/60">08 / Film</div>
+            <figcaption class="absolute inset-x-0 bottom-0 flex items-end justify-between p-6 md:p-7">
+              <div class="card-meta">
+                <h3 class="font-syne text-xl font-bold md:text-2xl">Cove of Stillness</h3>
+                <p class="mt-1.5 text-[10px] uppercase tracking-[0.3em] text-white/55">Bali — MMXXIV</p>
+              </div>
+              <span class="card-tag rounded-full border border-platinum/25 bg-white/5 px-3.5 py-1.5 text-[9px] uppercase tracking-[0.3em] text-platinum backdrop-blur-sm">04:05</span>
+            </figcaption>
+          </figure>
+        </article>
+      </div>
+    </section>
+
+    <!-- ======================= DRIFT STRIP ======================= -->
+    <section class="relative mt-28 overflow-hidden py-6 md:mt-40" aria-hidden="true">
+      <div id="drift-strip" class="font-syne font-extrabold uppercase leading-none tracking-tight text-[clamp(4rem,12vw,11rem)] text-transparent" style="-webkit-text-stroke: 1px rgba(197,197,197,0.22);">
+        Visual Storytelling&nbsp;✦&nbsp;Thrulenses&nbsp;✦&nbsp;Visual Storytelling&nbsp;✦&nbsp;Thrulenses&nbsp;✦&nbsp;
+      </div>
+    </section>
+
+    <!-- ======================= THE PASSION (pinned) ======================= -->
+    <section id="passion" class="relative mt-10 md:mt-16">
+      <div id="passion-pin" class="flex h-[100svh] min-h-[560px] items-center">
+        <div class="mx-auto w-full max-w-[1600px] px-6 md:px-10">
+          <p class="mb-8 flex items-center gap-4 text-[10px] uppercase tracking-[0.45em] text-platinum/70 md:mb-12" data-reveal>
+            <span class="inline-block h-px w-10 bg-platinum/60"></span>
+            The Passion
+          </p>
+          <p id="passion-text" class="max-w-5xl font-syne font-bold leading-[1.28] text-[clamp(1.5rem,3.4vw,3.2rem)]">
+            I don't just document spaces; I capture the atmosphere, the raw emotion, and the silent narratives of luxury. Thrulenses is born from an obsession with light, geometry, and the art of visual storytelling.
+          </p>
+          <div class="mt-10 flex items-center gap-6 text-[10px] uppercase tracking-[0.4em] text-white/30 md:mt-14" data-reveal>
+            <span>Written by the operator</span><span class="h-px w-16 bg-white/15"></span><span>MMXXVI</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= CORE CAPABILITIES ======================= -->
+    <section id="capabilities" class="mx-auto mt-24 max-w-[1600px] px-6 md:mt-36 md:px-10">
+      <div class="mb-14 flex items-end justify-between md:mb-20">
+        <h2 class="font-syne font-extrabold uppercase leading-[0.95] tracking-tight text-[clamp(2rem,5vw,4.5rem)]">
+          <span class="mask-line"><span class="mask-inner reveal-line">What I Do</span></span>
+        </h2>
+        <p class="pb-2 text-right text-[10px] uppercase tracking-[0.35em] text-smoke" data-reveal>( Solo, By Design )</p>
+      </div>
+
+      <div class="grid grid-cols-1 border-t border-platinum/15 md:grid-cols-3">
+        <div class="cap-card group border-b border-platinum/15 px-1 py-10 transition-colors duration-700 hover:bg-white/[0.03] md:border-b-0 md:border-r md:p-10 lg:p-14">
+          <p class="text-[10px] uppercase tracking-[0.4em] text-white/30">01</p>
+          <i data-lucide="film" class="mt-8 h-6 w-6 text-platinum transition-transform duration-700 group-hover:-translate-y-1"></i>
+          <h3 class="mt-6 font-syne text-xl font-bold md:text-2xl">Cinematography<br />&amp; Photography</h3>
+          <p class="mt-5 text-[13px] leading-relaxed text-smoke">
+            Every project is framed, shot and finished by me — one eye, one
+            vision, carried across moving image and stills alike.
+          </p>
+          <ul class="mt-8 space-y-3 text-[11px] uppercase tracking-[0.25em] text-white/45">
+            <li class="border-t border-platinum/15 pt-3">Films &amp; Editorial Stills</li>
+            <li class="border-t border-platinum/15 pt-3">Aerial Perspectives</li>
+            <li class="border-t border-platinum/15 pt-3">Concept to Final Cut</li>
+          </ul>
+        </div>
+
+        <div class="cap-card group border-b border-platinum/15 px-1 py-10 transition-colors duration-700 hover:bg-white/[0.03] md:border-b-0 md:border-r md:p-10 lg:p-14">
+          <p class="text-[10px] uppercase tracking-[0.4em] text-white/30">02</p>
+          <i data-lucide="sliders-horizontal" class="mt-8 h-6 w-6 text-platinum transition-transform duration-700 group-hover:-translate-y-1"></i>
+          <h3 class="mt-6 font-syne text-xl font-bold md:text-2xl">Premium Color<br />Grading</h3>
+          <p class="mt-5 text-[13px] leading-relaxed text-smoke">
+            Captured in 10-bit S-Log3 and hand-graded frame by frame — a
+            signature palette of deep blacks, soft highlights and honest tones.
+          </p>
+          <ul class="mt-8 space-y-3 text-[11px] uppercase tracking-[0.25em] text-white/45">
+            <li class="border-t border-platinum/15 pt-3">S-Log3 Workflow</li>
+            <li class="border-t border-platinum/15 pt-3">Film-Emulation LUTs</li>
+            <li class="border-t border-platinum/15 pt-3">HDR Masters</li>
+          </ul>
+        </div>
+
+        <div class="cap-card group px-1 py-10 transition-colors duration-700 hover:bg-white/[0.03] md:p-10 lg:p-14">
+          <p class="text-[10px] uppercase tracking-[0.4em] text-white/30">03</p>
+          <i data-lucide="zap" class="mt-8 h-6 w-6 text-platinum transition-transform duration-700 group-hover:-translate-y-1"></i>
+          <h3 class="mt-6 font-syne text-xl font-bold md:text-2xl">Fast Delivery<br />Turnaround</h3>
+          <p class="mt-5 text-[13px] leading-relaxed text-smoke">
+            No agency layers, no waiting rooms. You talk directly to the
+            person holding the camera — and the final cut arrives in days.
+          </p>
+          <ul class="mt-8 space-y-3 text-[11px] uppercase tracking-[0.25em] text-white/45">
+            <li class="border-t border-platinum/15 pt-3">Preview in 48 Hours</li>
+            <li class="border-t border-platinum/15 pt-3">Finals Within Days</li>
+            <li class="border-t border-platinum/15 pt-3">One Direct Line</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= THE ARSENAL ======================= -->
+    <section id="arsenal" class="mx-auto mt-28 max-w-[1600px] px-6 md:mt-40 md:px-10">
+      <div class="mb-14 flex items-end justify-between md:mb-20">
+        <h2 class="font-syne font-extrabold uppercase leading-[0.95] tracking-tight text-[clamp(2rem,5vw,4.5rem)]">
+          <span class="mask-line"><span class="mask-inner reveal-line">The</span></span>
+          <span class="mask-line"><span class="mask-inner reveal-line text-platinum">Arsenal</span></span>
+        </h2>
+        <p class="pb-2 text-right text-[10px] uppercase tracking-[0.35em] text-smoke" data-reveal>( Tools of the Craft )</p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-px overflow-hidden border border-platinum/15 bg-platinum/15 sm:grid-cols-2 lg:grid-cols-3">
+
+        <div class="gear-card group relative bg-obsidian p-8 md:p-10" data-gear>
+          <p class="text-[10px] uppercase tracking-[0.4em] text-white/30">01</p>
+          <i data-lucide="camera" class="mt-10 h-6 w-6 text-platinum"></i>
+          <h3 class="mt-6 font-syne text-lg font-bold md:text-xl">Sony A7&nbsp;V</h3>
+          <p class="mt-3 text-[12px] leading-relaxed text-smoke">Full-frame body — the beating heart of the kit. 10-bit S-Log3, silent and precise.</p>
+          <p class="mt-6 text-[9px] uppercase tracking-[0.35em] text-white/25">Body / Full Frame</p>
+        </div>
+
+        <div class="gear-card group relative bg-obsidian p-8 md:p-10" data-gear>
+          <p class="text-[10px] uppercase tracking-[0.4em] text-white/30">02</p>
+          <i data-lucide="aperture" class="mt-10 h-6 w-6 text-platinum"></i>
+          <h3 class="mt-6 font-syne text-lg font-bold md:text-xl">Sigma 14-24mm<br />&amp; 50mm f/1.4</h3>
+          <p class="mt-3 text-[12px] leading-relaxed text-smoke">Wide geometry for architecture; a fast prime for atmosphere, detail and depth.</p>
+          <p class="mt-6 text-[9px] uppercase tracking-[0.35em] text-white/25">Glass / Art Series</p>
+        </div>
+
+        <div class="gear-card group relative bg-obsidian p-8 md:p-10" data-gear>
+          <p class="text-[10px] uppercase tracking-[0.4em] text-white/30">03</p>
+          <i data-lucide="move-3d" class="mt-10 h-6 w-6 text-platinum"></i>
+          <h3 class="mt-6 font-syne text-lg font-bold md:text-xl">Zhiyun Stabilizer</h3>
+          <p class="mt-3 text-[12px] leading-relaxed text-smoke">Weightless, floating movement — corridors, courtyards and suites in one breath.</p>
+          <p class="mt-6 text-[9px] uppercase tracking-[0.35em] text-white/25">Motion / Gimbal</p>
+        </div>
+
+        <div class="gear-card group relative bg-obsidian p-8 md:p-10" data-gear>
+          <p class="text-[10px] uppercase tracking-[0.4em] text-white/30">04</p>
+          <i data-lucide="plane" class="mt-10 h-6 w-6 text-platinum"></i>
+          <h3 class="mt-6 font-syne text-lg font-bold md:text-xl">DJI Mini 4 Pro</h3>
+          <p class="mt-3 text-[12px] leading-relaxed text-smoke">Aerial perspectives, anywhere — the property in its landscape, seen from silence.</p>
+          <p class="mt-6 text-[9px] uppercase tracking-[0.35em] text-white/25">Aerial / Drone</p>
+        </div>
+
+        <div class="gear-card group relative bg-obsidian p-8 md:p-10" data-gear>
+          <p class="text-[10px] uppercase tracking-[0.4em] text-white/30">05</p>
+          <i data-lucide="mic" class="mt-10 h-6 w-6 text-platinum"></i>
+          <h3 class="mt-6 font-syne text-lg font-bold md:text-xl">Røde Audio</h3>
+          <p class="mt-3 text-[12px] leading-relaxed text-smoke">Clean, cinematic sound — because atmosphere is heard as much as it is seen.</p>
+          <p class="mt-6 text-[9px] uppercase tracking-[0.35em] text-white/25">Sound / Capture</p>
+        </div>
+
+        <!-- Highlight card -->
+        <div class="gear-card gear-highlight group relative bg-platinum p-8 text-obsidian md:p-10" data-gear>
+          <p class="text-[10px] uppercase tracking-[0.4em] text-obsidian/40">06</p>
+          <i data-lucide="fingerprint" class="mt-10 h-6 w-6 text-obsidian"></i>
+          <h3 class="mt-6 font-syne text-lg font-extrabold md:text-xl">The Operator</h3>
+          <p class="mt-3 text-[12px] leading-relaxed text-obsidian/70">The mind behind the lenses — turning creative concepts into reality, one frame at a time.</p>
+          <p class="mt-6 text-[9px] uppercase tracking-[0.35em] text-obsidian/40">Human / Irreplaceable</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= CONNECT / ABOUT ======================= -->
+    <footer id="about" class="relative mt-32 overflow-hidden border-t border-platinum/15 md:mt-48">
+      <div class="mx-auto max-w-[1600px] px-6 pb-10 pt-24 md:px-10 md:pt-36">
+
+        <div class="mb-16 grid grid-cols-1 gap-10 md:mb-24 md:grid-cols-2 md:gap-20">
+          <div data-reveal>
+            <p class="mb-8 flex items-center gap-4 text-[10px] uppercase tracking-[0.45em] text-platinum/70">
+              <span class="inline-block h-px w-10 bg-platinum/60"></span>
+              The Artist Behind Thrulenses
+            </p>
+            <p class="max-w-md text-[14px] leading-relaxed text-smoke">
+              I'm an independent cinematographer &amp; photographer devoted to
+              spaces that deserve to be felt, not just seen. When you work with
+              Thrulenses you work with me — the same hands on the camera, the
+              grade and the final delivery. One artist, accountable for every
+              single frame.
+            </p>
+          </div>
+          <div class="flex flex-col justify-end gap-4 text-[10px] uppercase tracking-[0.35em] text-white/40 md:items-end md:text-right" data-reveal>
+            <p>Available Worldwide</p>
+            <p>Films · Stills · Aerials</p>
+            <p>Response Within 24H</p>
+          </div>
+        </div>
+
+        <a href="mailto:Thrulenses670@gmail.com?subject=Project%20Inquiry%20—%20Thrulenses"
+           class="footer-cta magnetic block font-syne font-extrabold uppercase leading-[0.95] tracking-tight text-[clamp(2.6rem,9.5vw,10rem)]"
+           data-cursor="WRITE">
+          <span class="mask-line"><span class="mask-inner reveal-line grad-text">Let's Create</span></span>
+          <span class="mask-line"><span class="mask-inner reveal-line grad-text">Together</span></span>
+        </a>
+
+        <div class="mt-16 flex flex-col gap-10 border-t border-platinum/15 pt-10 md:mt-24 md:flex-row md:items-center md:justify-between" data-reveal>
+          <div>
+            <p class="text-[10px] uppercase tracking-[0.4em] text-white/35">Direct Line</p>
+            <a href="mailto:Thrulenses670@gmail.com" class="magnetic mt-3 inline-block text-sm tracking-wide text-platinum transition-colors duration-500 hover:text-white">
+              Thrulenses670@gmail.com
+            </a>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"
+               class="magnetic flex h-11 w-11 items-center justify-center rounded-full border border-platinum/25 text-platinum transition-colors duration-500 hover:border-white hover:bg-white hover:text-obsidian">
+              <i data-lucide="instagram" class="h-4 w-4"></i>
+            </a>
+            <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="Showreel"
+               class="magnetic flex h-11 w-11 items-center justify-center rounded-full border border-platinum/25 text-platinum transition-colors duration-500 hover:border-white hover:bg-white hover:text-obsidian">
+              <i data-lucide="play" class="h-4 w-4"></i>
+            </a>
+            <a href="mailto:Thrulenses670@gmail.com" aria-label="Email"
+               class="magnetic flex h-11 w-11 items-center justify-center rounded-full border border-platinum/25 text-platinum transition-colors duration-500 hover:border-white hover:bg-white hover:text-obsidian">
+              <i data-lucide="mail" class="h-4 w-4"></i>
+            </a>
+          </div>
+
+          <button id="back-to-top"
+                  class="magnetic group inline-flex items-center gap-3 self-start text-[10px] uppercase tracking-[0.35em] text-white/45 transition-colors duration-500 hover:text-white md:self-auto">
+            Back to top
+            <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 -rotate-45 transition-transform duration-500 group-hover:-translate-y-1"></i>
+          </button>
+        </div>
+
+        <div class="mt-10 flex flex-col gap-3 border-t border-platinum/15 pt-6 text-[9px] uppercase tracking-[0.35em] text-white/25 md:flex-row md:items-center md:justify-between">
+          <p>© MMXXVI Thrulenses — Shot &amp; built with obsession</p>
+          <p>One artist · Every frame · Worldwide</p>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ======================= ASSET MODAL (films & photos) ======================= -->
+  <div id="asset-modal" class="fixed inset-0 z-[250] items-center justify-center p-4 md:p-10" role="dialog" aria-modal="true" aria-label="Asset viewer">
+    <div id="modal-backdrop" class="absolute inset-0 bg-black/90 backdrop-blur-md"></div>
+    <div id="modal-dialog" class="relative w-full max-w-6xl">
+      <div class="mb-4 flex items-end justify-between gap-6">
+        <div>
+          <h3 id="modal-title" class="font-syne text-lg font-bold md:text-2xl"></h3>
+          <p id="modal-meta" class="mt-1 text-[10px] uppercase tracking-[0.3em] text-smoke"></p>
+        </div>
+        <button id="modal-close" aria-label="Close viewer"
+                class="magnetic flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full border border-platinum/25 text-white transition-colors duration-500 hover:border-white hover:bg-white hover:text-obsidian">
+          <i data-lucide="x" class="h-4 w-4"></i>
+        </button>
+      </div>
+      <div class="relative aspect-video overflow-hidden border border-platinum/15 bg-black">
+        <video id="modal-video" class="hidden h-full w-full" controls playsinline preload="auto"></video>
+        <img id="modal-photo" class="hidden h-full w-full object-contain" src="" alt="" />
+        <div id="modal-fallback" class="card-fallback absolute inset-0 hidden flex-col items-center justify-center gap-4 p-8 text-center">
+          <img id="modal-fallback-img" src="" alt="" class="absolute inset-0 h-full w-full object-cover opacity-40" />
+          <p class="relative font-syne text-sm font-bold uppercase tracking-[0.35em] text-platinum">Private Screening</p>
+          <p class="relative max-w-sm text-xs leading-relaxed text-white/60">This piece is shown privately. Request the full version via the direct line below.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= SCRIPTS ======================= -->
+  <script>
+  (function () {
+    'use strict';
+
+    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var finePointer = window.matchMedia('(pointer: fine)').matches;
+    var hasGSAP = typeof window.gsap !== 'undefined' && typeof window.ScrollTrigger !== 'undefined';
+
+    /* ---------- Lucide icons (script is deferred; body may parse first) ---------- */
+    function mountIcons() {
+      if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', mountIcons);
+    } else {
+      mountIcons();
+    }
+    window.addEventListener('load', mountIcons);
+
+    /* ---------- Image resilience: if a thumbnail dies, reveal the designed fallback ---------- */
+    document.querySelectorAll('.card-img, #hero-fallback').forEach(function (img) {
+      function drop() { img.style.display = 'none'; }
+      img.addEventListener('error', drop);
+      if (img.complete && img.naturalWidth === 0 && img.src) drop();
+    });
+
+    /* ---------- Hero video: fade in only when actually playable ---------- */
+    var heroVideo = document.getElementById('hero-video');
+    if (heroVideo) {
+      heroVideo.addEventListener('canplay', function () {
+        if (hasGSAP) gsap.to(heroVideo, { opacity: 1, duration: 1.6, ease: 'power2.out' });
+        else heroVideo.style.opacity = '1';
+      });
+      var p = heroVideo.play();
+      if (p && p.catch) p.catch(function () { /* autoplay blocked — image base remains */ });
+    }
+
+    /* ---------- Tab counts (always, even without GSAP) ---------- */
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.work-tab'));
+    tabs.forEach(function (tab) {
+      var f = tab.getAttribute('data-filter');
+      var n = f === 'all'
+        ? document.querySelectorAll('.work-card').length
+        : document.querySelectorAll('.work-card[data-type="' + f + '"]').length;
+      var count = tab.querySelector('.tab-count');
+      if (count) count.textContent = '(' + String(n).padStart(2, '0') + ')';
+    });
+
+    /* ---------- No-GSAP graceful path ---------- */
+    if (!hasGSAP) {
+      var pre = document.getElementById('preloader');
+      if (pre) pre.style.display = 'none';
+      document.body.style.overflow = '';
+      // plain filtering still works
+      tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          var f = tab.getAttribute('data-filter');
+          tabs.forEach(function (t) { t.classList.toggle('active', t === tab); });
+          document.querySelectorAll('.work-card').forEach(function (c) {
+            c.style.display = (f === 'all' || c.getAttribute('data-type') === f) ? '' : 'none';
+          });
+        });
+      });
+      return; // page remains fully readable, statically
+    }
+
+    gsap.registerPlugin(ScrollTrigger);
+    gsap.config({ nullTargetWarn: false });
+
+    /* ============================================================
+       Split helpers (lightweight SplitText stand-ins)
+       ============================================================ */
+    function splitChars(el) {
+      // chars are inline-block, so wrap each word in a nowrap span:
+      // lines then break between words, never mid-word
+      var text = el.textContent;
+      el.setAttribute('aria-label', text);
+      el.textContent = '';
+      var frag = document.createDocumentFragment();
+      text.split(' ').forEach(function (word, wi, arr) {
+        if (word !== '') {
+          var wordSpan = document.createElement('span');
+          wordSpan.className = 'split-word';
+          wordSpan.setAttribute('aria-hidden', 'true');
+          for (var i = 0; i < word.length; i++) {
+            var span = document.createElement('span');
+            span.className = 'char';
+            span.textContent = word[i];
+            wordSpan.appendChild(span);
+          }
+          frag.appendChild(wordSpan);
+        }
+        if (wi < arr.length - 1) frag.appendChild(document.createTextNode(' '));
+      });
+      el.appendChild(frag);
+      return el.querySelectorAll('.char');
+    }
+
+    function splitWords(el) {
+      var words = el.textContent.trim().split(/\s+/);
+      el.setAttribute('aria-label', el.textContent.trim());
+      el.textContent = '';
+      var frag = document.createDocumentFragment();
+      words.forEach(function (w, i) {
+        var span = document.createElement('span');
+        span.className = 'ph-word';
+        span.setAttribute('aria-hidden', 'true');
+        span.textContent = w;
+        frag.appendChild(span);
+        if (i < words.length - 1) frag.appendChild(document.createTextNode(' '));
+      });
+      el.appendChild(frag);
+      return el.querySelectorAll('.ph-word');
+    }
+
+    /* ============================================================
+       Custom magnetic cursor
+       ============================================================ */
+    var cursor = document.getElementById('cursor');
+    if (cursor && finePointer && !prefersReducedMotion) {
+      var label = cursor.querySelector('.cursor-label');
+      var xTo = gsap.quickTo(cursor, 'x', { duration: 0.35, ease: 'power3.out' });
+      var yTo = gsap.quickTo(cursor, 'y', { duration: 0.35, ease: 'power3.out' });
+      gsap.set(cursor, { xPercent: -50, yPercent: -50, autoAlpha: 0 }); // hidden until the mouse moves
+
+      var cursorSeen = false;
+      window.addEventListener('mousemove', function (e) {
+        if (!cursorSeen) {
+          cursorSeen = true;
+          gsap.set(cursor, { x: e.clientX, y: e.clientY });
+          gsap.to(cursor, { autoAlpha: 1, duration: 0.4 });
+        }
+        xTo(e.clientX);
+        yTo(e.clientY);
+      });
+
+      function badge(text) {
+        label.textContent = text;
+        cursor.classList.add('is-badge');
+        gsap.to(cursor, { width: 88, height: 88, duration: 0.5, ease: 'power4.out' });
+      }
+      function dot() {
+        cursor.classList.remove('is-badge');
+        gsap.to(cursor, { width: 12, height: 12, duration: 0.5, ease: 'power4.out' });
+      }
+      function grow() {
+        gsap.to(cursor, { width: 44, height: 44, duration: 0.45, ease: 'power4.out' });
+      }
+
+      document.querySelectorAll('[data-cursor]').forEach(function (el) {
+        el.addEventListener('mouseenter', function () { badge(el.getAttribute('data-cursor')); });
+        el.addEventListener('mouseleave', dot);
+      });
+      document.querySelectorAll('a:not([data-cursor]), button:not([data-cursor])').forEach(function (el) {
+        el.addEventListener('mouseenter', grow);
+        el.addEventListener('mouseleave', dot);
+      });
+      window.addEventListener('mousedown', function () { gsap.to(cursor, { scale: 0.85, duration: 0.25 }); });
+      window.addEventListener('mouseup', function () { gsap.to(cursor, { scale: 1, duration: 0.35, ease: 'back.out(3)' }); });
+    }
+
+    /* ============================================================
+       Magnetic elements
+       ============================================================ */
+    if (finePointer && !prefersReducedMotion) {
+      document.querySelectorAll('.magnetic').forEach(function (el) {
+        var strength = 0.35;
+        el.addEventListener('mousemove', function (e) {
+          var r = el.getBoundingClientRect();
+          var relX = e.clientX - (r.left + r.width / 2);
+          var relY = e.clientY - (r.top + r.height / 2);
+          gsap.to(el, { x: relX * strength, y: relY * strength, duration: 0.6, ease: 'power3.out' });
+        });
+        el.addEventListener('mouseleave', function () {
+          gsap.to(el, { x: 0, y: 0, duration: 1, ease: 'elastic.out(1, 0.4)' });
+        });
+      });
+    }
+
+    /* ============================================================
+       Preloader → hero intro
+       ============================================================ */
+    var heroChars = [];
+    document.querySelectorAll('#hero-headline .hl-line').forEach(function (line) {
+      line.querySelectorAll('*').length === 0
+        ? heroChars.push.apply(heroChars, splitChars(line))
+        : line.childNodes.forEach(function (node) {
+            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '') {
+              var holder = document.createElement('span');
+              holder.textContent = node.textContent;
+              node.parentNode.replaceChild(holder, node);
+              heroChars.push.apply(heroChars, splitChars(holder));
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+              heroChars.push.apply(heroChars, splitChars(node));
+            }
+          });
+    });
+
+    document.body.style.overflow = 'hidden';
+
+    var preWord = document.getElementById('preloader-word');
+    var preChars = preWord ? splitChars(preWord) : [];
+    var preCount = { v: 0 };
+    var preCountEl = document.getElementById('preloader-count');
+
+    var heroIntro = gsap.timeline({ paused: true });
+    heroIntro
+      .fromTo(heroChars, { yPercent: 115 }, { yPercent: 0, duration: 1.1, ease: 'power4.out', stagger: 0.018 }, 0)
+      .fromTo('#hero-eyebrow', { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 1, ease: 'power3.out' }, 0.35)
+      .fromTo('#hero-foot', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1, ease: 'power3.out' }, 0.55)
+      .fromTo('#scroll-indicator', { opacity: 0 }, { opacity: 1, duration: 1 }, 0.8)
+      .fromTo('#site-header', { yPercent: -100 }, { yPercent: 0, duration: 1, ease: 'power3.out' }, 0.45)
+      .fromTo('#hero-media', { scale: 1.14 }, { scale: 1, duration: 2.4, ease: 'power2.out' }, 0);
+
+    var preTl = gsap.timeline({
+      onComplete: function () {
+        document.body.style.overflow = '';
+        var pre = document.getElementById('preloader');
+        if (pre) pre.style.display = 'none';
+      }
+    });
+
+    if (prefersReducedMotion) {
+      preTl.set('#preloader', { autoAlpha: 0 });
+      heroIntro.progress(1);
+    } else {
+      preTl
+        .fromTo(preChars, { yPercent: 115 }, { yPercent: 0, duration: 0.9, ease: 'power4.out', stagger: 0.05 })
+        .fromTo('#preloader-bar', { scaleX: 0 }, { scaleX: 1, duration: 1.5, ease: 'power2.inOut' }, '-=0.3')
+        .to(preCount, {
+          v: 100, duration: 1.5, ease: 'power2.inOut', snap: { v: 1 },
+          onUpdate: function () { if (preCountEl) preCountEl.textContent = String(preCount.v).padStart(2, '0'); }
+        }, '<')
+        .to(preChars, { yPercent: -115, duration: 0.7, ease: 'power3.in', stagger: 0.03 }, '+=0.15')
+        .to('#preloader-bar', { scaleX: 0, transformOrigin: 'right center', duration: 0.6, ease: 'power3.in' }, '<')
+        .to('#preloader-count', { opacity: 0, duration: 0.4 }, '<')
+        .to('#preloader', { yPercent: -100, duration: 1.05, ease: 'power4.inOut' }, '-=0.1')
+        .add(function () { heroIntro.play(); }, '-=0.75');
+    }
+
+    /* ============================================================
+       Continuous scroll-line indicator
+       ============================================================ */
+    if (!prefersReducedMotion) {
+      gsap.fromTo('#scroll-line',
+        { yPercent: -100 },
+        { yPercent: 100, duration: 1.7, ease: 'power2.inOut', repeat: -1, repeatDelay: 0.4 });
+    }
+
+    /* ============================================================
+       Hero parallax exit
+       ============================================================ */
+    if (!prefersReducedMotion) {
+      gsap.to('#hero-media', {
+        yPercent: 18, ease: 'none',
+        scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true }
+      });
+      gsap.to('#hero-content', {
+        opacity: 0, y: -70, ease: 'none',
+        scrollTrigger: { trigger: '#hero', start: 'top top', end: '62% top', scrub: true }
+      });
+    }
+
+    /* ============================================================
+       Header state
+       ============================================================ */
+    ScrollTrigger.create({
+      start: 80,
+      onEnter: function () { document.body.classList.add('scrolled'); },
+      onLeaveBack: function () { document.body.classList.remove('scrolled'); }
+    });
+
+    /* ============================================================
+       Marquee + drifting outline strip
+       ============================================================ */
+    if (!prefersReducedMotion) {
+      gsap.to('.marquee-content', { xPercent: -100, duration: 30, ease: 'none', repeat: -1 });
+      gsap.to('#drift-strip', {
+        x: function () { return -(document.getElementById('drift-strip').scrollWidth * 0.25); },
+        ease: 'none',
+        scrollTrigger: { trigger: '#drift-strip', start: 'top bottom', end: 'bottom top', scrub: 1.2 }
+      });
+    }
+
+    /* ============================================================
+       Line-mask reveals (section titles, footer giant type)
+       ============================================================ */
+    gsap.utils.toArray('.reveal-line').forEach(function (el) {
+      gsap.fromTo(el,
+        { yPercent: 115 },
+        {
+          yPercent: 0, duration: 1.2, ease: 'power4.out',
+          scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+        });
+    });
+
+    /* ============================================================
+       Generic fade-up reveals
+       ============================================================ */
+    gsap.utils.toArray('[data-reveal]').forEach(function (el) {
+      gsap.fromTo(el,
+        { opacity: 0, y: 40 },
+        {
+          opacity: 1, y: 0, duration: 1.1, ease: 'power3.out',
+          scrollTrigger: { trigger: el, start: 'top 90%', once: true }
+        });
+    });
+
+    /* ============================================================
+       Work grid: entrance + differential parallax (desktop only)
+       ============================================================ */
+    gsap.utils.toArray('.work-card').forEach(function (card) {
+      // entrance animates the inner figure so it never fights the
+      // parallax scrub, which owns `y` on the card itself
+      gsap.fromTo(card.querySelector('figure'),
+        { opacity: 0, y: 70 },
+        {
+          opacity: 1, y: 0, duration: 1.2, ease: 'power3.out',
+          scrollTrigger: { trigger: card, start: 'top 92%', once: true }
+        });
+    });
+
+    ScrollTrigger.matchMedia({
+      '(min-width: 1024px) and (prefers-reduced-motion: no-preference)': function () {
+        gsap.utils.toArray('.work-card').forEach(function (card) {
+          var speed = parseFloat(card.getAttribute('data-speed') || '0.5');
+          var shift = speed * 130;
+          gsap.fromTo(card,
+            { y: shift },
+            {
+              y: -shift, ease: 'none',
+              scrollTrigger: { trigger: card, start: 'top bottom', end: 'bottom top', scrub: 1.1 }
+            });
+        });
+      }
+    });
+
+    /* ============================================================
+       Filter tabs (ALL / CINEMATOGRAPHY / PHOTOGRAPHY)
+       ============================================================ */
+    var tabIndicator = document.getElementById('tab-indicator');
+    var filterBusy = false;
+
+    function activeTab() { return document.querySelector('.work-tab.active'); }
+
+    function moveIndicator(tab, instant) {
+      if (!tab || !tabIndicator) return;
+      var tabsBox = document.getElementById('work-tabs').getBoundingClientRect();
+      var r = tab.getBoundingClientRect();
+      var props = { left: r.left - tabsBox.left, width: r.width };
+      if (instant) gsap.set(tabIndicator, props);
+      else gsap.to(tabIndicator, { left: props.left, width: props.width, duration: 0.7, ease: 'power4.out' });
+    }
+
+    function applyFilter(type) {
+      filterBusy = true;
+      var cards = gsap.utils.toArray('.work-card');
+      var visibleFigures = cards
+        .filter(function (c) { return c.style.display !== 'none'; })
+        .map(function (c) { return c.querySelector('figure'); });
+
+      gsap.to(visibleFigures, {
+        opacity: 0, y: 26, scale: 0.985, duration: 0.4, stagger: 0.025, ease: 'power2.in',
+        onComplete: function () {
+          cards.forEach(function (c) {
+            c.style.display = (type === 'all' || c.getAttribute('data-type') === type) ? '' : 'none';
+          });
+          var shown = cards
+            .filter(function (c) { return c.style.display !== 'none'; })
+            .map(function (c) { return c.querySelector('figure'); });
+          ScrollTrigger.refresh();
+          gsap.fromTo(shown,
+            { opacity: 0, y: 46, scale: 0.985 },
+            {
+              opacity: 1, y: 0, scale: 1, duration: 0.8, stagger: 0.06, ease: 'power3.out', clearProps: 'scale',
+              onComplete: function () { filterBusy = false; }
+            });
+        }
+      });
+    }
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        if (tab.classList.contains('active') || filterBusy) return;
+        tabs.forEach(function (t) { t.classList.toggle('active', t === tab); });
+        moveIndicator(tab, false);
+        applyFilter(tab.getAttribute('data-filter'));
+      });
+    });
+    // position the indicator under "All" once layout settles
+    moveIndicator(activeTab(), true);
+    window.addEventListener('load', function () { moveIndicator(activeTab(), true); });
+    window.addEventListener('resize', function () { moveIndicator(activeTab(), true); });
+
+    /* ============================================================
+       The Passion: pinned, word-by-word illumination
+       ============================================================ */
+    var phText = document.getElementById('passion-text');
+    if (phText) {
+      var phWords = splitWords(phText);
+      if (prefersReducedMotion) {
+        gsap.set(phWords, { opacity: 1 });
+      } else {
+        gsap.to(phWords, {
+          opacity: 1,
+          stagger: 0.35,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '#passion-pin',
+            start: 'top top',
+            end: '+=160%',
+            scrub: 0.6,
+            pin: true,
+            anticipatePin: 1
+          }
+        });
+      }
+    }
+
+    /* ============================================================
+       Capabilities cards
+       ============================================================ */
+    gsap.utils.toArray('.cap-card').forEach(function (card, i) {
+      gsap.fromTo(card,
+        { opacity: 0, y: 60 },
+        {
+          opacity: 1, y: 0, duration: 1.1, ease: 'power3.out', delay: (i % 3) * 0.12,
+          scrollTrigger: { trigger: '#capabilities', start: 'top 78%', once: true }
+        });
+    });
+
+    /* ============================================================
+       Arsenal cards: alternating horizontal slide-in
+       ============================================================ */
+    gsap.utils.toArray('[data-gear]').forEach(function (card, i) {
+      gsap.fromTo(card,
+        { opacity: 0, x: (i % 2 === 0 ? -60 : 60) },
+        {
+          opacity: 1, x: 0, duration: 1, ease: 'power3.out', delay: (i % 3) * 0.08,
+          scrollTrigger: { trigger: '#arsenal', start: 'top 74%', once: true }
+        });
+    });
+
+    /* ============================================================
+       Asset modal — films play, photographs display
+       ============================================================ */
+    var modal = document.getElementById('asset-modal');
+    var modalDialog = document.getElementById('modal-dialog');
+    var modalBackdrop = document.getElementById('modal-backdrop');
+    var modalVideo = document.getElementById('modal-video');
+    var modalPhoto = document.getElementById('modal-photo');
+    var modalTitle = document.getElementById('modal-title');
+    var modalMeta = document.getElementById('modal-meta');
+    var modalFallback = document.getElementById('modal-fallback');
+    var modalFallbackImg = document.getElementById('modal-fallback-img');
+    var modalOpen = false;
+
+    var modalTl = gsap.timeline({ paused: true })
+      .fromTo(modalBackdrop, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out' }, 0)
+      .fromTo(modalDialog,
+        { opacity: 0, scale: 0.86, y: 40 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.85, ease: 'power4.out' }, 0.08);
+
+    function openModal(card) {
+      var type = card.getAttribute('data-type') || 'video';
+      var thumb = card.querySelector('.card-img');
+      var thumbSrc = (thumb && thumb.src && thumb.style.display !== 'none') ? (thumb.currentSrc || thumb.src) : '';
+
+      modalTitle.textContent = card.getAttribute('data-title') || '';
+      modalMeta.textContent = card.getAttribute('data-meta') || '';
+      modalFallback.classList.add('hidden');
+      modalFallback.classList.remove('flex');
+      modalVideo.classList.add('hidden');
+      modalPhoto.classList.add('hidden');
+
+      if (thumbSrc) {
+        modalFallbackImg.src = thumbSrc;
+        modalFallbackImg.style.display = '';
+      } else {
+        modalFallbackImg.removeAttribute('src');
+        modalFallbackImg.style.display = 'none';
+      }
+
+      if (type === 'photo') {
+        modalPhoto.src = card.getAttribute('data-full') || thumbSrc;
+        modalPhoto.alt = card.getAttribute('data-title') || '';
+        modalPhoto.classList.remove('hidden');
+      } else {
+        if (thumbSrc) modalVideo.setAttribute('poster', thumbSrc);
+        else modalVideo.removeAttribute('poster');
+        modalVideo.src = card.getAttribute('data-video') || '';
+        modalVideo.classList.remove('hidden');
+      }
+
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      modalOpen = true;
+      modalTl.timeScale(1).restart();
+
+      if (type !== 'photo') {
+        var playP = modalVideo.play();
+        if (playP && playP.catch) playP.catch(function () { /* user can press play */ });
+      }
+    }
+
+    function closeModal() {
+      if (!modalOpen) return;
+      modalOpen = false;
+      modalTl.timeScale(1.6).reverse();
+      modalTl.eventCallback('onReverseComplete', function () {
+        modal.classList.remove('open');
+        modalVideo.pause();
+        modalVideo.removeAttribute('src');
+        modalVideo.load();
+        modalPhoto.removeAttribute('src');
+        document.body.style.overflow = '';
+        modalTl.eventCallback('onReverseComplete', null);
+      });
+    }
+
+    modalVideo.addEventListener('error', function () {
+      // Video source unreachable → cinematic still + private-screening note
+      if (!modalOpen) return;
+      modalVideo.classList.add('hidden');
+      modalFallback.classList.remove('hidden');
+      modalFallback.classList.add('flex');
+    });
+    modalPhoto.addEventListener('error', function () {
+      if (!modalOpen || !modalPhoto.getAttribute('src')) return;
+      modalPhoto.classList.add('hidden');
+      modalFallback.classList.remove('hidden');
+      modalFallback.classList.add('flex');
+    });
+    modalFallbackImg.addEventListener('error', function () {
+      modalFallbackImg.style.display = 'none';
+    });
+
+    document.querySelectorAll('.work-card').forEach(function (card) {
+      card.addEventListener('click', function () { openModal(card); });
+      card.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(card); }
+      });
+    });
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    modalBackdrop.addEventListener('click', closeModal);
+    window.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+
+    /* ============================================================
+       Back to top
+       ============================================================ */
+    document.getElementById('back-to-top').addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+    });
+
+    /* ============================================================
+       Keep ScrollTrigger honest after fonts/images settle
+       ============================================================ */
+    window.addEventListener('load', function () { ScrollTrigger.refresh(); });
+  })();
+  </script>
+</body>
+</html>
